@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pylon Billable Hours Tracker</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;color:#1a1a1a;min-height:100vh}
+  .header{background:#fff;border-bottom:1px solid #e5e5e5;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+  .header h1{font-size:17px;font-weight:600;color:#1a1a1a}
+  .header span{font-size:12px;color:#888;background:#f0f0f0;padding:3px 10px;border-radius:20px}
+  .main{padding:24px;max-width:960px;margin:0 auto}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e5e5e5}
+  .card .label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .card .value{font-size:24px;font-weight:600;color:#1a1a1a}
+  .card .sub{font-size:12px;color:#aaa;margin-top:2px}
+  .section-title{font-size:14px;font-weight:600;margin-bottom:12px;color:#1a1a1a}
+  .engagements{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+  .eng-card{background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px 20px}
+  .eng-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+  .eng-name{font-size:14px;font-weight:600}
+  .eng-project{font-size:12px;color:#888;margin-bottom:12px}
+  .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+  .badge.active{background:#e6f4ea;color:#1e7e34}
+  .badge.risk{background:#fff3cd;color:#856404}
+  .badge.done{background:#e8f0fe;color:#1a56db}
+  .eng-engineers{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+  .avatar{width:24px;height:24px;border-radius:50%;background:#e8f0fe;color:#1a56db;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .eng-engineers span{font-size:12px;color:#555}
+  .progress-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .progress-track{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:4px;transition:width .4s ease}
+  .progress-fill.green{background:#34a853}
+  .progress-fill.amber{background:#fbbc04}
+  .progress-fill.red{background:#ea4335}
+  .progress-label{font-size:12px;color:#555;white-space:nowrap;min-width:90px;text-align:right}
+  .eng-footer{display:flex;justify-content:space-between;font-size:12px;color:#888;padding-top:12px;border-top:1px solid #f0f0f0}
+  .eng-footer strong{color:#1a1a1a}
+  .del-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;padding:0;line-height:1}
+  .del-btn:hover{color:#ea4335}
+  .panel{background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:20px;margin-bottom:24px}
+  .panel h2{font-size:14px;font-weight:600;margin-bottom:16px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-group{display:flex;flex-direction:column;gap:4px}
+  .form-group.full{grid-column:1/-1}
+  .form-group label{font-size:12px;color:#555;font-weight:500}
+  .form-group input,.form-group select{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fafafa;outline:none;color:#1a1a1a}
+  .form-group input:focus,.form-group select:focus{border-color:#6c47ff;background:#fff}
+  .btn{padding:9px 18px;font-size:13px;font-weight:500;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .btn.primary{background:#6c47ff;color:#fff}
+  .btn.primary:hover{background:#5835e0}
+  .btn.ghost{background:#f0f0f0;color:#333}
+  .btn.ghost:hover{background:#e0e0e0}
+  .entries-table{width:100%;border-collapse:collapse;font-size:13px}
+  .entries-table th{font-size:11px;color:#888;font-weight:500;padding:6px 10px;text-align:left;border-bottom:1px solid #f0f0f0;text-transform:uppercase;letter-spacing:.3px}
+  .entries-table td{padding:10px 10px;border-bottom:1px solid #f5f5f5;color:#1a1a1a}
+  .entries-table tr:last-child td{border-bottom:none}
+  .empty{text-align:center;color:#aaa;font-size:13px;padding:24px 0}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:95vw}
+  .modal h3{font-size:15px;font-weight:600;margin-bottom:16px}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  @media(max-width:600px){.summary{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⏱ Billable Hours Tracker</h1>
+  <span>Powered by Level AI</span>
+</div>
+<div class="main">
+  <div class="summary" id="summary"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="section-title" style="margin-bottom:0">Engagements</div>
+    <button class="btn primary" onclick="openModal()">+ New engagement</button>
+  </div>
+  <div class="engagements" id="engagements"></div>
+  <div class="panel">
+    <h2>Log hours</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Engagement</label>
+        <select id="logEng" onchange="updateEngEngineers()"></select>
+      </div>
+      <div class="form-group">
+        <label>Engineer</label>
+        <select id="logEng2"></select>
+      </div>
+      <div class="form-group">
+        <label>Hours</label>
+        <input type="number" id="logHours" min="0.5" step="0.5" placeholder="e.g. 8" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="logDate" />
+      </div>
+      <div class="form-group full">
+        <label>Note (optional)</label>
+        <input type="text" id="logNote" placeholder="What was completed?" />
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn primary" onclick="logHours()">✓ Log hours</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Recent entries</h2>
+    <div id="entries"></div>
+  </div>
+</div>
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>New engagement</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>Account / Customer</label><input type="text" id="nAcc" placeholder="e.g. Level AI" /></div>
+      <div class="form-group"><label>Project name</label><input type="text" id="nProj" placeholder="e.g. Support AI integration" /></div>
+      <div class="form-group full"><label>Engineers (comma separated)</label><input type="text" id="nEng" placeholder="Carol Singh, Ravi Nair" /></div>
+      <div class="form-group"><label>Total agreed hours</label><input type="number" id="nHours" placeholder="e.g. 100" /></div>
+      <div class="form-group"><label>Hourly rate ($)</label><input type="number" id="nRate" placeholder="e.g. 200" /></div>
+      <div class="form-group"><label>Start date</label><input type="date" id="nStart" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="addEngagement()">Add engagement</button>
+    </div>
+  </div>
+</div>
+<script>
+let engs=[{id:1,account:"Level AI",project:"Support AI integration",engineers:["Abdul Jaseem","Carol Singh"],agreed:100,rate:200,start:"2025-06-01"},{id:2,account:"NovaTech",project:"Data pipeline build",engineers:["Ravi Nair"],agreed:60,rate:250,start:"2025-05-15"}];
+let entries=[{id:1,engId:1,engineer:"Abdul Jaseem",hours:18,date:"2025-06-01",note:"Webhook pipeline setup"},{id:2,engId:1,engineer:"Carol Singh",hours:12,date:"2025-06-02",note:"Auth flow"},{id:3,engId:2,engineer:"Ravi Nair",hours:28,date:"2025-06-01",note:"ETL schema design"}];
+let nid=3,neid=4;
+function initials(n){return n.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase()}
+function getSpent(id){return entries.filter(e=>e.engId===id).reduce((a,e)=>a+e.hours,0)}
+function badge(pct){if(pct>=100)return'<span class="badge done">Delivered</span>';if(pct>=85)return'<span class="badge risk">⚠ At risk</span>';return'<span class="badge active">Active</span>';}
+function fillClass(pct){return pct>=85?pct>=100?'red':'amber':'green'}
+function render(){
+  let tc=0,ts=0,tv=0;
+  engs.forEach(e=>{tc+=e.agreed;ts+=getSpent(e.id);tv+=getSpent(e.id)*e.rate});
+  document.getElementById('summary').innerHTML=`<div class="card"><div class="label">Total agreed</div><div class="value">${tc}h</div><div class="sub">${engs.length} engagements</div></div><div class="card"><div class="label">Hours spent</div><div class="value">${ts}h</div><div class="sub">${tc?Math.round(ts/tc*100):0}% consumed</div></div><div class="card"><div class="label">Hours remaining</div><div class="value">${Math.max(0,tc-ts)}h</div><div class="sub">billable left</div></div><div class="card"><div class="label">Value delivered</div><div class="value">$${tv.toLocaleString()}</div><div class="sub">billed to date</div></div>`;
+  document.getElementById('engagements').innerHTML=engs.map(e=>{const sp=getSpent(e.id),pct=e.agreed?Math.min(100,Math.round(sp/e.agreed*100)):0,rem=Math.max(0,e.agreed-sp);return`<div class="eng-card"><div class="eng-top"><div><div class="eng-name">${e.account}</div><div class="eng-project">${e.project}</div></div><div style="display:flex;gap:8px;align-items:center">${badge(pct)}<button class="del-btn" onclick="deleteEng(${e.id})">✕</button></div></div><div class="eng-engineers">${e.engineers.map(n=>`<div class="avatar">${initials(n)}</div>`).join('')}<span>${e.engineers.join(', ')}</span></div><div class="progress-row"><div class="progress-track"><div class="progress-fill ${fillClass(pct)}" style="width:${pct}%"></div></div><div class="progress-label">${sp} / ${e.agreed} hrs (${pct}%)</div></div><div class="eng-footer"><span><strong>${rem}h</strong> remaining</span><span>$${e.rate}/hr</span><span>Value delivered: <strong>$${(sp*e.rate).toLocaleString()}</strong></span><span>Since ${e.start}</span></div></div>`;}).join('')||'<div class="empty">No engagements yet.</div>';
+  const sel=document.getElementById('logEng');const cur=sel.value;sel.innerHTML=engs.map(e=>`<option value="${e.id}">${e.account} — ${e.project}</option>`).join('');if(cur)sel.value=cur;updateEngEngineers();
+  const elist=[...entries].sort((a,b)=>b.id-a.id).slice(0,20);
+  document.getElementById('entries').innerHTML=elist.length?`<table class="entries-table"><thead><tr><th>Date</th><th>Account</th><th>Engineer</th><th>Hours</th><th>Note</th><th></th></tr></thead><tbody>${elist.map(en=>{const eg=engs.find(e=>e.id===en.engId);return`<tr><td>${en.date}</td><td>${eg?eg.account:'—'}</td><td>${en.engineer}</td><td>${en.hours}h</td><td style="color:#888">${en.note||''}</td><td><button class="del-btn" onclick="deleteEntry(${en.id})">✕</button></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No entries yet.</div>';
+}
+function updateEngEngineers(){const id=parseInt(document.getElementById('logEng').value);const e=engs.find(e=>e.id===id);document.getElementById('logEng2').innerHTML=e?e.engineers.map(n=>`<option>${n}</option>`).join(''):'';}
+function logHours(){const engId=parseInt(document.getElementById('logEng').value);const engineer=document.getElementById('logEng2').value;const hours=parseFloat(document.getElementById('logHours').value);const date=document.getElementById('logDate').value;const note=document.getElementById('logNote').value.trim();if(!engId||!engineer||!hours||!date){alert('Please fill in engagement, engineer, hours and date.');return}entries.push({id:neid++,engId,engineer,hours,date,note});document.getElementById('logHours').value='';document.getElementById('logNote').value='';render();}
+function addEngagement(){const account=document.getElementById('nAcc').value.trim();const project=document.getElementById('nProj').value.trim();const engineers=document.getElementById('nEng').value.split(',').map(s=>s.trim()).filter(Boolean);const agreed=parseInt(document.getElementById('nHours').value);const rate=parseInt(document.getElementById('nRate').value);const start=document.getElementById('nStart').value||new Date().toISOString().split('T')[0];if(!account||!project||!engineers.length||!agreed||!rate){alert('Please fill in all fields.');return}engs.push({id:nid++,account,project,engineers,agreed,rate,start});closeModal();['nAcc','nProj','nEng','nHours','nRate','nStart'].forEach(id=>document.getElementById(id).value='');render();}
+function deleteEng(id){if(!confirm('Delete this engagement and all its entries?'))return;engs=engs.filter(e=>e.id!==id);entries=entries.filter(e=>e.engId!==id);render()}
+function deleteEntry(id){entries=entries.filter(e=>e.id!==id);render()}
+function openModal(){document.getElementById('modalBg').classList.add('open')}
+function closeModal(){document.getElementById('modalBg').classList.remove('open')}
+document.getElementById('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal()});
+document.getElementById('logDate').value=new Date().toISOString().split('T')[0];
+render();
+</script>
+</body>
+</html>
