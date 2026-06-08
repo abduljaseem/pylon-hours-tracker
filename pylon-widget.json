@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "header": {
+    "title": "Billable Hours Tracker"
+  },
+  "components": [
+    {
+      "type": "card",
+      "header": { "title": "Level AI — Support AI integration" },
+      "components": [
+        { "type": "text", "label": "Hours spent", "value": "30 / 100 hrs (30%)" },
+        { "type": "text", "label": "Hours remaining", "value": "70 hrs" },
+        { "type": "badge", "label": "Status", "items": [{ "value": "Active", "color": "green" }] },
+        { "type": "text", "label": "Value delivered", "value": "$6,000" },
+        { "type": "button", "button_type": "link", "label": "Open full tracker", "url": "https://abduljaseem.github.io/pylon-hours-tracker" }
+      ]
+    },
+    {
+      "type": "card",
+      "header": { "title": "NovaTech — Data pipeline build" },
+      "components": [
+        { "type": "text", "label": "Hours spent", "value": "28 / 60 hrs (47%)" },
+        { "type": "text", "label": "Hours remaining", "value": "32 hrs" },
+        { "type": "badge", "label": "Status", "items": [{ "value": "Active", "color": "green" }] },
+        { "type": "text", "label": "Value delivered", "value": "$7,000" },
+        { "type": "button", "button_type": "link", "label": "Open full tracker", "url": "https://abduljaseem.github.io/pylon-hours-tracker" }
+      ]
+    }
+  ]
+}
